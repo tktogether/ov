@@ -4,19 +4,8 @@
 #
 # Copyright (c) 2013 Nyr. Released under the MIT License.
 
-#
-# Run script in a simple way without input
-#
-
-
-# Detect Debian users running the script with "sh" instead of bash
-if readlink /proc/$$/exe | grep -q "dash"; then
-	echo "This script needs to be run with bash, not sh"
-	exit
-fi
-
 if [[ "$EUID" -ne 0 ]]; then
-	echo "Sorry, you need to run this as root"
+	echo "Sorry, you need to run this as root, or use sudo"
 	exit 2
 fi
 
@@ -35,7 +24,7 @@ You need to enable TUN before running this script"
 	exit 4
 fi
 
-setenforce 0 2>/dev/null || date
+setenforce 0 2>/dev/null || cal || date
 
 if [[ -e /etc/debian_version ]]; then
 	OS=debian
