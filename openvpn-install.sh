@@ -35,7 +35,7 @@ You need to enable TUN before running this script"
 	exit 4
 fi
 
-setenforce 0
+setenforce 0 2>/dev/null || date
 
 if [[ -e /etc/debian_version ]]; then
 	OS=debian
