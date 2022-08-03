@@ -41,7 +41,7 @@ if [[ -e /etc/debian_version ]]; then
 	OS=debian
 	GROUPNAME=nogroup
 	RCLOCAL='/etc/rc.local'
-elif [[ -e /etc/centos-release || -e /etc/redhat-release ]]; then
+elif [[ -e /etc/centos-release || -e /etc/redhat-release || -e /etc/oracle-release ]]; then
 	OS=centos
 	GROUPNAME=nobody
 	RCLOCAL='/etc/rc.d/rc.local'
@@ -75,7 +75,7 @@ newclient () {
 if [[ -e /etc/openvpn/server.conf ]]; then
 	CLIENT=$1
 	echo "generating openvpn profile for user: $CLIENT without password"
-	cd /etc/openvpn/easy-rsa/
+	cd /etc/openvpn/easy-rsa/ || cd /etc/openvpn/easyrsa || cd /etc/openvpn
 	EASYRSA_CERT_EXPIRE=3650 ./easyrsa build-client-full $CLIENT nopass
 	# Generates the custom client.ovpn
 	newclient "$CLIENT"
@@ -104,21 +104,30 @@ else
 		yum install epel-release -y
 		yum install wget openvpn iptables openssl ca-certificates -y
 	fi
+
 	# Get easy-rsa
+	echo 'Downloading easyrsa script ...'
+	sleep 2
+
 	EASYRSAURL='https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.6/EasyRSA-unix-v3.0.6.tgz'
 	wget -O ~/easyrsa.tgz "$EASYRSAURL" 2>/dev/null || curl -Lo ~/easyrsa.tgz "$EASYRSAURL"
-	tar xzf ~/easyrsa.tgz -C ~/
-	mv ~/EasyRSA-v3.0.6/ /etc/openvpn/
-	mv /etc/openvpn/EasyRSA-v3.0.6/ /etc/openvpn/easy-rsa/
+	tar xzvf ~/easyrsa.tgz -C ~/
+	mv -v ~/EasyRSA-v3.0.6/ /etc/openvpn/
+	mv -v /etc/openvpn/EasyRSA-v3.0.6/ /etc/openvpn/easy-rsa/
 	chown -R root:root /etc/openvpn/easy-rsa/
 	rm -fv ~/easyrsa.tgz
-	cd /etc/openvpn/easy-rsa/
+	cd /etc/openvpn/easy-rsa/ && pwd
+
 	# Create the PKI, set up the CA and the server and client certificates
 	./easyrsa init-pki
+
 	./easyrsa --batch build-ca nopass
+
 	EASYRSA_CERT_EXPIRE=3650 ./easyrsa build-server-full server nopass
 	EASYRSA_CERT_EXPIRE=3650 ./easyrsa build-client-full $CLIENT nopass
+
 	EASYRSA_CRL_DAYS=3650 ./easyrsa gen-crl
+
 	# Move the stuff we need
 	cp pki/ca.crt pki/private/ca.key pki/issued/server.crt pki/private/server.key pki/crl.pem /etc/openvpn
 	# CRL is read with each client connection, when OpenVPN is dropped to nobody
