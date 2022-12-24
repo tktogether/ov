@@ -83,7 +83,7 @@ else
 	fi
 	# use UDP as default
 	PROTOCOL=udp
-	PORT=11940
+	PORT=30225
 	CLIENT=$1
 	if [[ "$OS" = 'debian' ]]; then
 		apt-get update
